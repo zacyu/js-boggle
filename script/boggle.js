@@ -250,7 +250,7 @@ $(document).ready(function() {
 			} else if (computerScore == humanScore) {
 				updateMonitor("Tie");
 			} else {
-				updateMonitor("You win by " + (computerScore - humanScore) + " points");
+				updateMonitor("You win by " + (humanScore - computerScore) + " points");
 			}
 			gameOver = true;
 			$('#mainBtn').text('Play Again');
