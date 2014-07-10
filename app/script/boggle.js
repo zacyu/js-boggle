@@ -1,4 +1,4 @@
-var englishWords = new Array();
+var englishWords = [];
 var STANDARD_CUBES = [
 	"AAEEGN", "ABBJOO", "ACHOPS", "AFFKPS",
 	"AOOTTW", "CIMOTU", "DEILRX", "DELRVY",
@@ -66,7 +66,7 @@ $(document).ready(function() {
 	var lastRow, lastCol;
 	var playerWords;
 	var allWords;
-	var flag = new Object();
+	var flag = {};
 	var boardMapStr;
 	var boggleSize;
 	var gameOver = false;
@@ -76,7 +76,7 @@ $(document).ready(function() {
 			return false;
 		if (currentWord.length > 0 && (Math.abs(row - lastRow) > 1 || Math.abs(col - lastCol) > 1))
 			return false;
-		if (flag[row * boggleSize + col] == true)
+		if (flag[row * boggleSize + col])
 			return false;
 		currentWord += boardMapStr[row * boggleSize + col];
 		flag[row * boggleSize + col] = true;
@@ -106,8 +106,8 @@ $(document).ready(function() {
 	}
 
 	function loadBoggle(big) {
-		playerWords = new Array();
-		allWords = new Array();
+		playerWords = [];
+		allWords = [];
 		$('#gameCube .letterBox').remove();
 		$('.wordCard').slideUp(500, function() {
 			$(this).remove();
@@ -146,6 +146,10 @@ $(document).ready(function() {
 					if ($(this).hasClass('selected')) return false;
 					var pos = $(this).data('pos');
 					letterOnClick(pos.row, pos.col);
+				}).mouseleave(function(e) {
+					if(e.which) $(this).click();
+				}).mouseenter(function(e) {
+					if(e.which) $(this).click();
 				});
 				$('#gameCube').append(letterBoxDiv);
 			}
@@ -228,13 +232,13 @@ $(document).ready(function() {
 				updateMonitor("You find '" + currentWord + "'");
 			}
 			currentWord = "";
-			flag = new Object();
+			flag = {};
 			$('#mainBtn').text("End Turn");
 			$('.letterBox.selected').removeClass('selected');
 		} else {
 			for (var i = 0; i < boggleSize; i++)
 				for (var j = 0; j < boggleSize; j++) {
-					var passedflag = new Object();
+					var passedflag = {};
 					findAllWords("", passedflag, i, j);
 				}
 			for (var i = 0; i < allWords.length; i++) {
@@ -256,4 +260,4 @@ $(document).ready(function() {
 			$('#mainBtn').text('Play Again');
 		}
 	});
-})
+});
