@@ -25,7 +25,6 @@ function binarySearch(items, value) {
 		}
 		middle = Math.floor((stopIndex + startIndex) / 2);
 	}
-	//console.log(startIndex, stopIndex, middle);
 	return (items[middle] != value) ? -1 : middle;
 }
 
@@ -61,11 +60,45 @@ function binaryInsert(items, value) {
 	items.splice(middle, 0, value);
 }
 
+function trieSearch(trie, word, prefixOnly) {
+	var curr = trie;
+	for (var i = 0; i < word.length; i++) {
+		if (typeof curr[word[i]] != 'object') return false;
+		curr = curr[word[i]];
+	}
+	if (prefixOnly) return true;
+	return curr['$'] == 1;
+}
+
+function trieInsert(trie, word) {
+	var curr = trie;
+	for (var j = 0; j < word.length; j++) {
+		var letter = word[j];
+		if (typeof curr[letter] == 'undefined') {
+			curr[letter] = {};
+		}
+		curr = curr[letter];
+	}
+	curr["$"] = 1;
+}
+
+function trieIterator(trie, callback, prefix) {
+	if (!prefix) prefix = "";
+	Object.keys(trie).forEach(function(key) {
+  		if (key == '$') {
+			callback(prefix);
+		} else {
+			trieIterator(trie[key], callback, prefix + key);
+		}
+	});
+}
+
 $(document).ready(function() {
 	var currentWord = "";
 	var lastRow, lastCol;
-	var playerWords;
+	var englishWords;
 	var allWords;
+	var playerWords;
 	var flag = {};
 	var boardMapStr;
 	var boggleSize;
@@ -106,8 +139,8 @@ $(document).ready(function() {
 	}
 
 	function loadBoggle(big) {
-		playerWords = [];
-		allWords = [];
+		playerWords = {};
+		allWords = {};
 		$('#gameCube .letterBox').remove();
 		$('.wordCard').slideUp(500, function() {
 			$(this).remove();
@@ -179,39 +212,36 @@ $(document).ready(function() {
 		var wordCard = $('<div class="wordCard"><div class="word"></div><div class="point"></div></div>');
 		wordCard.find('.word').text(word);
 		wordCard.find('.point').text('+' + point);
-		wordCard.hide();
 		if (isComputer) {
 			$('#computerScoreBoard .wordCardContainer').append(wordCard);
 			$('#computerScore').text(parseInt($('#computerScore').text()) + point);
+			$('#computerScoreBoard .wordCardContainer').scrollTop(10000000);
 		} else {
 			$('#humanScoreBoard .wordCardContainer').append(wordCard);
 			$('#humanScore').text(parseInt($('#humanScore').text()) + point);
-		}
-		wordCard.slideDown(500, function() {
-			if (isComputer)
-				$('#computerScoreBoard .wordCardContainer').scrollTop(10000000);
-			else
+			wordCard.hide().slideDown(500, function() {
 				$('#humanScoreBoard .wordCardContainer').scrollTop(10000000);
-		});
+			});
+		}
 	}
 
 	function findAllWords(word, passedflag, x, y) {
 		var newFlag = $.extend({}, passedflag);
 		newFlag[x * boggleSize + y] = true;
 		word += boardMapStr[x * boggleSize + y];
-		if (word.length > 3 && binarySearch(englishWords, word.toLowerCase()) > -1 && binarySearch(allWords, word) < 0) {
-			binaryInsert(allWords, word);
+		if (word.length > 3 && trieSearch(englishWords, word.toLowerCase()) && !trieSearch(allWords, word)) {
+			trieInsert(allWords, word);
 		}
 		for (var i = x - 1; i <= x + 1; i++)
 			for (var j = y - 1; j <= y + 1; j++)
-				if (i >= 0 && i < boggleSize && j >= 0 && j < boggleSize && newFlag[i * boggleSize + j] != true && binarySearchPrefix(englishWords, (word + boardMapStr[i * boggleSize + j]).toLowerCase())) {
+				if (i >= 0 && i < boggleSize && j >= 0 && j < boggleSize && newFlag[i * boggleSize + j] != true && trieSearch(englishWords, (word + boardMapStr[i * boggleSize + j]).toLowerCase(), true)) {
 					findAllWords(word, newFlag, i, j);
 				}
 	}
-	$.get('englishWords.txt', function(data) {
-		englishWords = data.split('\n');
+	$.get('englishWords.json', function(data) {
+		englishWords = data;
 		gameReady();
-	});
+	}, 'json');
 	$('#mainBtn').click(function() {
 		if (gameOver) {
 			gameOver = false;
@@ -222,13 +252,13 @@ $(document).ready(function() {
 		if (currentWord.length > 0) {
 			if (currentWord.length < 4) {
 				updateMonitor("'" + currentWord + "' is too short");
-			} else if (binarySearch(englishWords, currentWord.toLowerCase()) < 0) {
+			} else if (!trieSearch(englishWords, currentWord.toLowerCase())) {
 				updateMonitor("'" + currentWord + "' is not a word");
-			} else if (binarySearch(playerWords, currentWord) > -1) {
+			} else if (trieSearch(playerWords, currentWord)) {
 				updateMonitor("You already have '" + currentWord + "'");
 			} else {
 				recordWord(currentWord);
-				binaryInsert(playerWords, currentWord);
+				trieInsert(playerWords, currentWord);
 				updateMonitor("You find '" + currentWord + "'");
 			}
 			currentWord = "";
@@ -241,12 +271,11 @@ $(document).ready(function() {
 					var passedflag = {};
 					findAllWords("", passedflag, i, j);
 				}
-			for (var i = 0; i < allWords.length; i++) {
-				var word = allWords[i];
-				if (binarySearch(playerWords, word) < 0) {
+			trieIterator(allWords, function(word) {
+				if (!trieSearch(playerWords, word)) {
 					recordWord(word, true);
 				}
-			}
+			});
 			var computerScore = parseInt($('#computerScore').text()),
 				humanScore = parseInt($('#humanScore').text());
 			if (computerScore > humanScore) {
