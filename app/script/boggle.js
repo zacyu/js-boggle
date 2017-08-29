@@ -255,11 +255,11 @@ $(document).ready(function() {
 			} else if (!trieSearch(englishWords, currentWord.toLowerCase())) {
 				updateMonitor("'" + currentWord + "' is not a word");
 			} else if (trieSearch(playerWords, currentWord)) {
-				updateMonitor("You already have '" + currentWord + "'");
+				updateMonitor("You've already found '" + currentWord + "'");
 			} else {
 				recordWord(currentWord);
 				trieInsert(playerWords, currentWord);
-				updateMonitor("You find '" + currentWord + "'");
+				updateMonitor("You found '" + currentWord + "'");
 			}
 			currentWord = "";
 			flag = {};
@@ -279,11 +279,11 @@ $(document).ready(function() {
 			var computerScore = parseInt($('#computerScore').text()),
 				humanScore = parseInt($('#humanScore').text());
 			if (computerScore > humanScore) {
-				updateMonitor("You lose by " + (computerScore - humanScore) + " points");
+				updateMonitor("You lost by " + (computerScore - humanScore) + " points");
 			} else if (computerScore == humanScore) {
 				updateMonitor("Tie");
 			} else {
-				updateMonitor("You win by " + (humanScore - computerScore) + " points");
+				updateMonitor("You won by " + (humanScore - computerScore) + " points");
 			}
 			gameOver = true;
 			$('#mainBtn').text('Play Again');
